@@ -52,4 +52,6 @@ outletSchema.set('toJSON', {
   virtuals: true
 });
 
+outletSchema.index({ location: '2dsphere' });
+
 export default mongoose.model('Outlet', outletSchema);

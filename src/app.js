@@ -9,6 +9,7 @@ import logger from './logger';
 
 import baseRoutes from './routes/baseRoutes';
 import userRoutes from './routes/userRoutes';
+import outletRoutes from './routes/outletRoutes';
 import burppleScraperTask from './utils/burppleScraper';
 
 // connect to Mongo DB
@@ -36,6 +37,7 @@ app.use(express.static(path.join(__dirname, '../public')));
 // Routes
 app.use('/', baseRoutes);
 app.use('/user', userRoutes);
+app.use('/outlet', outletRoutes);
 
 // Catch 404 and forward to error handler
 app.use((req, res, next) => {
