@@ -8,24 +8,26 @@ routes.get('/', (req, res) => {
 });
 
 routes.post('/nearest', async (req, res) => {
-  const { coordinates, maxDistance, maxPrice } = req.body;
+  const { coordinates, maxDistance, maxPrice, minPrice = 0 } = req.body;
 
-  const nearestOutlets = await Outlet.find({
-    $and: [
-      { price: { $lte: maxPrice } },
-      {
-        location: {
-          $near: {
-            $geometry: {
-              type: 'Point',
-              coordinates
-            },
-            $minDistance: 0,
-            $maxDistance: maxDistance
-          }
-        }
-      }
-    ]
+  const nearestOutlets = await Outlet.retrieveNearest({
+    coordinates,
+    maxDistance,
+    maxPrice,
+    minPrice
+  });
+
+  res.json(nearestOutlets);
+});
+
+routes.post('/beyond', async (req, res) => {
+  const { coordinates, maxDistance, maxPrice, minPrice = 0 } = req.body;
+
+  const nearestOutlets = await Outlet.retrieveNearestBeyond({
+    coordinates,
+    maxDistance,
+    maxPrice,
+    minPrice
   });
 
   res.json(nearestOutlets);

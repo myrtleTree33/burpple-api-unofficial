@@ -52,6 +52,55 @@ outletSchema.set('toJSON', {
   virtuals: true
 });
 
+function retrieveNearest({ maxPrice, minPrice = 0, coordinates, maxDistance }) {
+  return this.find({
+    $and: [
+      { price: { $lte: maxPrice } },
+      { price: { $gte: minPrice } },
+      {
+        location: {
+          $near: {
+            $geometry: {
+              type: 'Point',
+              coordinates
+            },
+            $minDistance: 0,
+            $maxDistance: maxDistance
+          }
+        }
+      }
+    ]
+  });
+}
+
+outletSchema.statics.retrieveNearest = retrieveNearest;
+
+function retrieveNearestBeyond({ maxPrice, minPrice = 0, coordinates, maxDistance }) {
+  const [maxPrice2, minPrice2] = [maxPrice * 2, minPrice * 2];
+
+  return this.find({
+    $and: [
+      { hasBeyond: true },
+      { price: { $lte: maxPrice2 } },
+      { price: { $gte: minPrice2 } },
+      {
+        location: {
+          $near: {
+            $geometry: {
+              type: 'Point',
+              coordinates
+            },
+            $minDistance: 0,
+            $maxDistance: maxDistance
+          }
+        }
+      }
+    ]
+  });
+}
+
+outletSchema.statics.retrieveNearestBeyond = retrieveNearestBeyond;
+
 outletSchema.index({ location: '2dsphere' });
 
 export default mongoose.model('Outlet', outletSchema);

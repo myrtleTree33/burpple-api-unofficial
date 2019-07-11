@@ -115,8 +115,9 @@ const burppleWorkerSingle = asyncWorker({
 });
 
 const burppleScraperTask = () => {
-  // burppleWorker();
-  // burppleWorkerSingle();
+  logger.info('Started Burpple scraping..');
+  burppleWorker();
+  burppleWorkerSingle();
 };
 
 export default burppleScraperTask;
