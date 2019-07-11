@@ -11,6 +11,7 @@ import baseRoutes from './routes/baseRoutes';
 import userRoutes from './routes/userRoutes';
 import outletRoutes from './routes/outletRoutes';
 import burppleScraperTask from './utils/burppleScraper';
+import getLatLng from './utils/locServices';
 
 // connect to Mongo DB
 logger.info(`Connecting to ${process.env.MONGO_URI}..`);
@@ -54,6 +55,6 @@ app.use((err, req, res, next) => {
   res.status(err.httpCode || 500).json({ code, message });
 });
 
-burppleScraperTask();
+// burppleScraperTask();
 
 export default app;

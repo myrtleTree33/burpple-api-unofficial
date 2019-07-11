@@ -1,6 +1,14 @@
 import { Router } from 'express';
+import processEvent from '../utils/chatbotUtils';
+import FBMessenger from 'fb-messenger';
+
+const { FACEBOOK_VERIFY_TOKEN, FACEBOOK_ACCESS_TOKEN } = process.env;
+
+const messenger = new FBMessenger({ token: FACEBOOK_ACCESS_TOKEN });
 
 const routes = Router();
+
+// TODO see https://blog.pusher.com/facebook-chatbot-dialogflow/
 
 /**
  * GET home page
@@ -9,28 +17,38 @@ routes.get('/', (req, res) => {
   res.json({ message: 'Welcome to starter-backend!' });
 });
 
-/**
- * GET /list
- *
- * This is a sample route demonstrating
- * a simple approach to error handling and testing
- * the global error handler. You most certainly want to
- * create different/better error handlers depending on
- * your use case.
- */
-routes.get('/list', (req, res, next) => {
-  const { title } = req.query;
+routes.post('/webhook', async (req, res) => {
+  const {
+    body: { object, entry }
+  } = req;
 
-  if (title == null || title === '') {
-    // You probably want to set the response HTTP status to 400 Bad Request
-    // or 422 Unprocessable Entity instead of the default 500 of
-    // the global error handler (e.g check out https://github.com/kbariotis/throw.js).
-    // This is just for demo purposes.
-    next(new Error('The "title" parameter is required'));
-    return;
+  if (object === 'page') {
+    entry.forEach(entry => {
+      const event = entry.messaging[0];
+      (async () => {
+        await processEvent(event, messenger);
+      })();
+      res.status(200).send('EVENT_RECEIVED');
+    });
+  } else {
+    res.sendStatus(404);
   }
+});
 
-  res.render('index', { title });
+routes.get('/webhook', (req, res) => {
+  const mode = req.query['hub.mode'];
+  const token = req.query['hub.verify_token'];
+  const challenge = req.query['hub.challenge'];
+
+  console.log('hihi');
+
+  if (mode && token) {
+    if (mode === 'subscribe' && token === FACEBOOK_VERIFY_TOKEN) {
+      res.status(200).send(challenge);
+    } else {
+      res.sendStatus(403);
+    }
+  }
 });
 
 export default routes;
