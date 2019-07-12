@@ -37,6 +37,7 @@
     "bcrypt": "^3.0.2",
     "body-parser": "^1.18.3",
     "cors": "^2.8.5",
+    "cron": "^1.7.1",
     "dialogflow": "^0.10.2",
     "express": "^4.16.4",
     "fb-messenger": "^2.3.1",

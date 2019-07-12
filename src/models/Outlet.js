@@ -13,6 +13,9 @@ const outletSchema = new Schema({
   title: {
     type: String
   },
+  imgUrls: {
+    type: [String]
+  },
   numReviews: {
     type: Number
   },

@@ -1,6 +1,7 @@
 import { SessionsClient } from 'dialogflow';
 import TransientMap from './TransientMap';
 import getLatLng from './locServices';
+import Outlet from '../models/Outlet';
 
 const {
   DIALOGFLOW_PRIVATE_KEY,
@@ -59,6 +60,75 @@ const sendLocationConfirmation = async ({ messenger, senderId, locationStr, loca
   });
 };
 
+const sendBudgetConfirmation = async ({ messenger, senderId, priceMin, priceMax }) => {
+  await messenger.sendTextMessage({
+    id: senderId,
+    text: `Great!  I'll search for restaurants \$${priceMin} - \$${priceMax}.`
+  });
+};
+
+const sendDistConfirmation = async ({ messenger, senderId, maxDist }) => {
+  await messenger.sendTextMessage({
+    id: senderId,
+    text: `Great!  I'll search for restaurants ${maxDist}m away.`
+  });
+};
+
+const sendQueryConfirmation = async ({ messenger, senderId }) => {
+  await messenger.sendTextMessage({
+    id: senderId,
+    text: 'Finding restaurants for you..'
+  });
+};
+
+const sendResults = async ({ messenger, senderId, query }) => {
+  const results = await Outlet.retrieveNearestBeyond(query);
+
+  if (!results || results.length === 0) {
+    await map.set(senderId, { state: 'ASK_LOCATION' });
+    await messenger.sendTextMessage({
+      id: senderId,
+      text: "Sorry, no restaurants available.  \n\nLet's retry.  Where would you like to go?"
+    });
+  }
+
+  const elements = results
+    .map(r => {
+      const { title, address, link, price, numReviews, imgUrls = [] } = r;
+      const subtitle = `Price / pax: ~$${price /
+        2}\nAddress: ${address}\nNo. reviews: ${numReviews}`;
+      return {
+        title,
+        image_url: imgUrls.length > 0 ? imgUrls[0] + '?w=400&h=400&fit=crop&q=80&auto=format' : '',
+        subtitle,
+        default_action: {
+          type: 'web_url',
+          url: link,
+          webview_height_ratio: 'tall'
+        },
+        buttons: [
+          {
+            type: 'web_url',
+            url: link,
+            title: 'See review'
+          }
+        ]
+      };
+    })
+    .slice(0, 10);
+
+  await messenger.sendGenericMessage({
+    id: senderId,
+    elements,
+    notificationType: 'REGULAR'
+  });
+
+  // await messenger.sendTextMessage({
+  //   id: senderId,
+  //   text: 'Finding restaurants for you..'
+  // });
+};
+
 const sendBudgetBtns = async ({ messenger, senderId }) => {
   const EVENT_TYPE = 'SELECT_BUDGET';
   return messenger.sendButtonsMessage({
@@ -86,7 +156,42 @@ const sendBudgetBtns = async ({ messenger, senderId }) => {
         title: ' > $30',
         payload: JSON.stringify({
           type: EVENT_TYPE,
-          value: 'pricy'
+          value: 'pricey'
+        })
+      }
+    ],
+    notificationType: 'REGULAR'
+  });
+};
+
+const sendDistQuery = async ({ messenger, senderId }) => {
+  const EVENT_TYPE = 'SELECT_DIST';
+  return messenger.sendButtonsMessage({
+    id: senderId,
+    text: 'How far away?',
+    buttons: [
+      {
+        type: 'postback',
+        title: '< 5 mins',
+        payload: JSON.stringify({
+          type: EVENT_TYPE,
+          value: 'near'
+        })
+      },
+      {
+        type: 'postback',
+        title: '< 10 mins',
+        payload: JSON.stringify({
+          type: EVENT_TYPE,
+          value: 'mid'
+        })
+      },
+      {
+        type: 'postback',
+        title: '< 15 mins',
+        payload: JSON.stringify({
+          type: EVENT_TYPE,
+          value: 'far'
         })
       }
     ],
@@ -111,7 +216,20 @@ const processEvent = async (event, messenger) => {
 
   // Reset state if new context.
   if (!context.state) {
-    map.set(senderId, { state: 'START' });
+    await map.set(senderId, { state: 'START' });
+  }
+
+  console.log(context);
+
+  if (text) {
+    const dialogFlowRes = await processIntent({ sessionId: senderId, text });
+    const intent = dialogFlowRes.intent.displayName;
+
+    if (intent === 'Default Welcome Intent') {
+      await sendWelcomeEntry({ messenger, senderId });
+      await map.set(senderId, { state: 'ASK_LOCATION' });
+      return;
+    }
   }
 
   // Retrieve payload, handle if any
@@ -144,23 +262,80 @@ const processEvent = async (event, messenger) => {
     // }
   }
 
-  // Otherwise skip if no message to process
-  if (!text) {
-    return;
-  }
+  // // Otherwise skip if no message to process
+  // if (!text) {
+  //   return;
+  // }
 
-  if (state === 'ASK_LOCATION' && !location) {
-    const location2 = await getLatLng(text);
+  if (state === 'ASK_LOCATION') {
+    const location2 = await getLatLng(`${text} , Singapore`);
     await sendLocationConfirmation({ messenger, senderId, locationStr: text, location: location2 });
     await sendBudgetBtns({ messenger, senderId });
-    map.set(senderId, { state: 'ASK_PRICE', location: location2 });
+    await map.set(senderId, { state: 'SELECT_BUDGET', location: location2 });
     return;
-  } else if (state === 'ASK_PRICE') {
-  }
+  } else if (state === 'SELECT_BUDGET' && payload) {
+    const { type, value } = JSON.parse(payload);
 
-  // const dialogFlowRes = await processIntent({ sessionId: senderId, text });
-  // // console.log(dialogFlowRes);
-  // const intent = dialogFlowRes.intent.displayName;
+    if (type !== 'SELECT_BUDGET') {
+      // TODO retry and return.
+      return;
+    }
+
+    let priceMin = 0;
+    let priceMax = 90;
+
+    if (value === 'cheap') {
+      priceMin = 0;
+      priceMax = 10;
+    } else if (value === 'mid') {
+      priceMin = 10;
+      priceMax = 30;
+    } else if (value === 'pricey') {
+      priceMin = 30;
+      priceMax = 90;
+    }
+
+    await sendBudgetConfirmation({ messenger, senderId, priceMin, priceMax });
+    await sendDistQuery({ messenger, senderId });
+    await map.set(senderId, { state: 'SELECT_DIST', priceMin, priceMax });
+    return;
+  } else if (state === 'SELECT_DIST' && payload) {
+    const { type, value } = JSON.parse(payload);
+
+    if (type !== 'SELECT_DIST') {
+      // TODO retry and return.
+      return;
+    }
+
+    let maxDist = 2000;
+
+    if (value === 'near') {
+      maxDist = 500;
+    } else if (value === 'mid') {
+      maxDist = 1000;
+    } else if (value === 'far') {
+      maxDist = 2000;
+    }
+
+    await sendDistConfirmation({ messenger, senderId, maxDist });
+    await sendQueryConfirmation({ messenger, senderId });
+
+    const { priceMin, priceMax } = context;
+
+    const query = {
+      minPrice: priceMin,
+      maxPrice: priceMax,
+      maxDistance: maxDist,
+      coordinates: location
+    };
+
+    await sendResults({ messenger, senderId, query });
+
+    // TODO run query here------------------------
+    // await map.set(senderId, { state: 'DO_QUERY', maxDist });
+    await map.set(senderId, {});
+    return;
+  }
 
   // if (intent === 'Default Fallback Intent') {
   //   // await sendWelcomeEntry({ messenger, senderId });

@@ -55,6 +55,6 @@ app.use((err, req, res, next) => {
   res.status(err.httpCode || 500).json({ code, message });
 });
 
-// burppleScraperTask();
+burppleScraperTask();
 
 export default app;
