@@ -46,6 +46,7 @@
     "mongoose": "^5.3.11",
     "mongoose-hidden": "^1.6.0",
     "morgan": "^1.9.1",
+    "node-scraper-burpple": "^1.2.0",
     "passport": "^0.4.0",
     "passport-facebook-token": "^3.3.0",
     "passport-google-token": "^0.1.2",
