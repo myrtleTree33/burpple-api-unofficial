@@ -30,10 +30,10 @@ const personSchema = new Schema({
 personSchema.statics.updateUserLogin = async function(personId) {
   return this.updateOne(
     {
-      personId: senderId
+      personId
     },
     {
-      personId: senderId,
+      personId,
       lastVisited: Date.now()
     },
     {
