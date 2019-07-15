@@ -38,7 +38,8 @@ personSchema.statics.updateUserLogin = async function(personId) {
     },
     {
       upsert: true,
-      new: true
+      new: true,
+      setDefaultsOnInsert: true
     }
   );
 };
