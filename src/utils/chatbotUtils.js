@@ -3,6 +3,7 @@ import TransientMap from './TransientMap';
 import getLatLng from './locServices';
 import Outlet from '../models/Outlet';
 import shuffle from 'shuffle-array';
+import Person from '../models/Person';
 
 const {
   DIALOGFLOW_PRIVATE_KEY,
@@ -207,6 +208,10 @@ const processEvent = async (event, messenger) => {
     message: { text, quick_reply: { payload: quickReplyPayload } = {} } = {},
     postback: { title, payload: postbackPayload } = {}
   } = event;
+
+  // Upsert the user, and last logged in time,
+  // to the list of users.
+  await Person.updateUserLogin(senderId);
 
   // Use either the postback or quickReply payloads
   const payload = postbackPayload || quickReplyPayload;
