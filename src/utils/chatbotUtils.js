@@ -120,6 +120,12 @@ const sendNormalResults = async ({ messenger, senderId, query }) => {
   shuffle(elements);
   elements = elements.slice(0, 10);
 
+  await messenger.sendTextMessage({
+    id: senderId,
+    text: 'These are some selections from Burpple:',
+    notificationType: 'REGULAR'
+  });
+
   await messenger.sendGenericMessage({
     id: senderId,
     elements,
@@ -163,6 +169,12 @@ const sendBurppleResults = async ({ messenger, senderId, query }) => {
 
   shuffle(elements);
   elements = elements.slice(0, 10);
+
+  await messenger.sendTextMessage({
+    id: senderId,
+    text: 'These are some selections from Burpple Beyond.  Do bring a friend (or date)!',
+    notificationType: 'REGULAR'
+  });
 
   await messenger.sendGenericMessage({
     id: senderId,
