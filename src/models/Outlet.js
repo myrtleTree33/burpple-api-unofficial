@@ -125,6 +125,7 @@ function retrieveNearestBeyond({ maxPrice, minPrice = 0, coordinates, maxDistanc
 }
 
 outletSchema.statics.retrieveNearestBeyond = retrieveNearestBeyond;
+outletSchema.statics.retrieveNearestBurpple = retrieveNearestBurpple;
 
 outletSchema.index({ location: '2dsphere' });
 
