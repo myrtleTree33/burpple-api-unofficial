@@ -78,6 +78,28 @@ function retrieveNearest({ maxPrice, minPrice = 0, coordinates, maxDistance }) {
 
 outletSchema.statics.retrieveNearest = retrieveNearest;
 
+function retrieveNearestBurpple({ maxPrice, minPrice = 0, coordinates, maxDistance }) {
+  return this.find({
+    $and: [
+      { hasBeyond: false },
+      { price: { $lte: maxPrice } },
+      { price: { $gte: minPrice } },
+      {
+        location: {
+          $near: {
+            $geometry: {
+              type: 'Point',
+              coordinates
+            },
+            $minDistance: 0,
+            $maxDistance: maxDistance
+          }
+        }
+      }
+    ]
+  });
+}
+
 function retrieveNearestBeyond({ maxPrice, minPrice = 0, coordinates, maxDistance }) {
   const [maxPrice2, minPrice2] = [maxPrice * 2, minPrice * 2];
 

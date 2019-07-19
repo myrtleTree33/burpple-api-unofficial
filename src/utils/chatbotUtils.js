@@ -83,14 +83,15 @@ const sendQueryConfirmation = async ({ messenger, senderId }) => {
   });
 };
 
-const sendResults = async ({ messenger, senderId, query }) => {
-  const results = await Outlet.retrieveNearestBeyond(query);
+const sendNormalResults = async ({ messenger, senderId, query }) => {
+  const results = await Outlet.retrieveNearestBurpple(query);
 
   if (!results || results.length === 0) {
     await map.set(senderId, { state: 'ASK_LOCATION' });
     await messenger.sendTextMessage({
       id: senderId,
-      text: "Sorry, no restaurants available.  \n\nLet's retry.  Where would you like to go?"
+      text:
+        "Sorry, no Burpple restaurants available.  \n\nLet's retry.  Where would you like to go?"
     });
   }
 
@@ -124,11 +125,50 @@ const sendResults = async ({ messenger, senderId, query }) => {
     elements,
     notificationType: 'REGULAR'
   });
+};
 
-  // await messenger.sendTextMessage({
-  //   id: senderId,
-  //   text: 'Finding restaurants for you..'
-  // });
+const sendBurppleResults = async ({ messenger, senderId, query }) => {
+  const results = await Outlet.retrieveNearestBeyond(query);
+
+  if (!results || results.length === 0) {
+    await map.set(senderId, { state: 'ASK_LOCATION' });
+    await messenger.sendTextMessage({
+      id: senderId,
+      text:
+        "Sorry, no restaurants available on Burpple Beyond.  \n\nLet's retry.  Where would you like to go?"
+    });
+  }
+
+  let elements = results.map(r => {
+    const { title, address, link, price, numReviews, imgUrls = [] } = r;
+    const subtitle = `Price / pax: ~$${price / 2}\nAddress: ${address}\nNo. reviews: ${numReviews}`;
+    return {
+      title,
+      image_url: imgUrls.length > 0 ? imgUrls[0] + '?w=400&h=400&fit=crop&q=80&auto=format' : '',
+      subtitle,
+      default_action: {
+        type: 'web_url',
+        url: link,
+        webview_height_ratio: 'tall'
+      },
+      buttons: [
+        {
+          type: 'web_url',
+          url: link,
+          title: 'See review'
+        }
+      ]
+    };
+  });
+
+  shuffle(elements);
+  elements = elements.slice(0, 10);
+
+  await messenger.sendGenericMessage({
+    id: senderId,
+    elements,
+    notificationType: 'REGULAR'
+  });
 };
 
 const sendBudgetBtns = async ({ messenger, senderId }) => {
@@ -333,7 +373,8 @@ const processEvent = async (event, messenger) => {
       coordinates: location
     };
 
-    await sendResults({ messenger, senderId, query });
+    await sendBurppleResults({ messenger, senderId, query });
+    await sendNormalResults({ messenger, senderId, query });
 
     // TODO run query here------------------------
     // await map.set(senderId, { state: 'DO_QUERY', maxDist });
