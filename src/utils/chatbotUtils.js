@@ -147,7 +147,7 @@ const sendBurppleResults = async ({ messenger, senderId, query }) => {
 
   let elements = results.map(r => {
     const { title, address, link, price, numReviews, imgUrls = [] } = r;
-    const subtitle = `Price / pax: ~$${price / 2}\nAddress: ${address}\nNo. reviews: ${numReviews}`;
+    const subtitle = `Price / pax: ~$${price}\nAddress: ${address}\nNo. reviews: ${numReviews}`;
     return {
       title,
       image_url: imgUrls.length > 0 ? imgUrls[0] + '?w=400&h=400&fit=crop&q=80&auto=format' : '',
