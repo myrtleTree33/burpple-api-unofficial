@@ -97,7 +97,7 @@ const sendNormalResults = async ({ messenger, senderId, query }) => {
 
   let elements = results.map(r => {
     const { title, address, link, price, numReviews, imgUrls = [] } = r;
-    const subtitle = `Price / pax: ~$${price / 2}\nAddress: ${address}\nNo. reviews: ${numReviews}`;
+    const subtitle = `Price / pax: ~$${price}\nAddress: ${address}\nNo. reviews: ${numReviews}`;
     return {
       title,
       image_url: imgUrls.length > 0 ? imgUrls[0] + '?w=400&h=400&fit=crop&q=80&auto=format' : '',
@@ -133,7 +133,7 @@ const sendNormalResults = async ({ messenger, senderId, query }) => {
   });
 };
 
-const sendBurppleResults = async ({ messenger, senderId, query }) => {
+const sendBeyondResults = async ({ messenger, senderId, query }) => {
   const results = await Outlet.retrieveNearestBeyond(query);
 
   if (!results || results.length === 0) {
@@ -147,7 +147,7 @@ const sendBurppleResults = async ({ messenger, senderId, query }) => {
 
   let elements = results.map(r => {
     const { title, address, link, price, numReviews, imgUrls = [] } = r;
-    const subtitle = `Price / pax: ~$${price}\nAddress: ${address}\nNo. reviews: ${numReviews}`;
+    const subtitle = `Price / pax: ~$${price / 2}\nAddress: ${address}\nNo. reviews: ${numReviews}`;
     return {
       title,
       image_url: imgUrls.length > 0 ? imgUrls[0] + '?w=400&h=400&fit=crop&q=80&auto=format' : '',
@@ -385,7 +385,7 @@ const processEvent = async (event, messenger) => {
       coordinates: location
     };
 
-    await sendBurppleResults({ messenger, senderId, query });
+    await sendBeyondResults({ messenger, senderId, query });
     await sendNormalResults({ messenger, senderId, query });
 
     // TODO run query here------------------------
