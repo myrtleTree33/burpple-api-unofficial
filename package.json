@@ -54,7 +54,7 @@
     "passport-google-token": "^0.1.2",
     "passport-jwt": "^4.0.0",
     "passport-local": "^1.0.0",
-    "pug": "^2.0.3",
+    "pug": "^3.0.1",
     "qs": "^6.7.0",
     "rimraf": "^2.6.2",
     "shuffle-array": "^1.0.1",
